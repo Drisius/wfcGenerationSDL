@@ -5,6 +5,12 @@
 #include <set>
 #include <algorithm>
 #include <vector>
+#include <iterator>
+
+enum Color
+{
+	NONE, BLUE, YELLOW, GREEN, RED, BLACK
+};
 
 const std::map<int, std::set<int>> partners =	{
 
@@ -23,21 +29,31 @@ struct Tile
 
 	int tileCoordinateX = 0;
 	int tileCoordinateY = 0;
-	int tileCoordinateZ = 0;
+	Color tileCoordinateZ = NONE;
 
 	int r = 0;
 	int g = 0;
 	int b = 0;
 	int a = 255;
 
-	int size = 16;
+	int tileSize = 16;
 
-	Tile();
+	Tile() {};
+	Tile(int size, bool randomizeColors);
 	Tile(int x, int y, int red, int green, int blue);
 	void drawTile(SDL_Renderer* renderer);
+	void setColor();
 };
 
-void initializeMapArray(Tile arrayMap[50][50]);
-void linkMapArray(Tile arrayMap[50][50]);
-void drawMapArray(SDL_Renderer* renderer, Tile arrayMap[50][50]);
-void wfc(Tile* tPtr);
+Color intToColor(int n);
+
+std::vector<std::vector<Tile>> initializeVector(int X, int Y, int size, bool randomizeColors);
+void initializeCoordinates(std::vector<std::vector<Tile>>& arrayMap);
+void linkMapArray(std::vector<std::vector<Tile>>& arrayMap);
+void drawMapArray(SDL_Renderer* renderer, std::vector<std::vector<Tile>>& arrayMap);
+
+std::set<int> returnSet(int n);
+std::set<int> intersectTwoSets(std::set<int> a, std::set<int> b);
+std::set<int> intersectSets(std::vector<int> altitudes);
+
+void wfc_4pt(Tile* tPtr, bool init);

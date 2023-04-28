@@ -201,10 +201,7 @@ void drawMapArray(SDL_Renderer* renderer, std::vector<std::vector<Tile>>& arrayM
 	}
 }
 
-// This algorithm runs recursively and vertically/diagonally; It does -not- guarantee a complete map coverage.
-// It also scales terribly - too many tiles and stack overflow occurs.
-
-void wfc_4pt(Tile* tPtr, bool init)
+void wfc_4pt(Tile* tPtr, bool init)		// This algorithm runs recursively and vertically/diagonally; It does -not- guarantee a complete map coverage.
 {
 	if (tPtr == nullptr || (tPtr->tileCoordinateZ != NONE && !init)) {
 		return;

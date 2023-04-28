@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 
+#include <vector>
 
 #include "main.h"
 #include "world.h"
@@ -23,26 +24,21 @@ int main()
 	SDL_Window* window;
 
 	SDL_Init(SDL_INIT_VIDEO);
-	SDL_CreateWindowAndRenderer(WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer);
+	SDL_CreateWindowAndRenderer(SPRITE_SIZE * X_DIMENSION, SPRITE_SIZE * Y_DIMENSION, 0, &window, &renderer);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
 
-	Tile mapArray[50][50];
+	std::vector<std::vector<Tile>> mapArray;
 
-	initializeMapArray(mapArray);
+	mapArray = initializeVector(X_DIMENSION, Y_DIMENSION, SPRITE_SIZE, RANDOM_COLORS);
+	initializeCoordinates(mapArray);
 	linkMapArray(mapArray);
+
+	Tile* randomTile = &mapArray[rand() % mapArray.size()][rand() % mapArray[1].size()];
+
+	wfc_4pt(randomTile, true);
+
 	drawMapArray(renderer, mapArray);
-
-
-	//for (int i = 0; i < WINDOW_WIDTH; ++i) {	// Fun Mode
-	//	for (int j = 0; j < WINDOW_HEIGHT; ++j) {
-	//		
-	//		int color = 16 * (i / 16 + j / 16) % 256;
-
-	//		SDL_SetRenderDrawColor(renderer, color, 0, color, 255);
-	//		SDL_RenderDrawPoint(renderer, i, j);
-	//	}
-	//}
 
 	SDL_RenderPresent(renderer);
 	while (1) {
@@ -55,4 +51,3 @@ int main()
 
 	return 0;
 }
-

@@ -1,5 +1,6 @@
 #pragma once
 
-static constexpr int WINDOW_HEIGHT = 800;
-static constexpr int WINDOW_WIDTH = 800;
-static constexpr int SPRITE_SIZE = 16;
+static constexpr int SPRITE_SIZE = 8;
+static constexpr int X_DIMENSION = 200;
+static constexpr int Y_DIMENSION = 200;
+static constexpr bool RANDOM_COLORS = true;
