@@ -32,15 +32,27 @@ int main()
 
 	mapArray = initializeVector(X_DIMENSION, Y_DIMENSION, SPRITE_SIZE, RANDOM_COLORS);
 	initializeCoordinates(mapArray);
-	linkMapArray(mapArray);
+	linkMapArray(mapArray, false);
 
 	Tile* randomTile = &mapArray[rand() % mapArray.size()][rand() % mapArray[1].size()];
 
-	wfc_4pt(randomTile, true);
+	wfc_2snake(randomTile);
+
+	// Turns the first tile purple then changes it to a "accessible" tile i.e. one that participates in the actual tiling; 1, 2, 3, 4
+
+	//wfc_4pt(randomTile, true);
+	/*drawMapArray(renderer, mapArray);
+	SDL_RenderPresent(renderer);
+	Sleep(5000);
+
+	verticalFill(mapArray);
+	horizontalFill(mapArray);*/
+
+	// wfc_8pt(randomTile, true);
 
 	drawMapArray(renderer, mapArray);
-
 	SDL_RenderPresent(renderer);
+
 	while (1) {
 		if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
 			break;
