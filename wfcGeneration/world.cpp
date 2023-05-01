@@ -223,6 +223,33 @@ std::set<int> intersectSets(std::vector<int> altitudes)
 
 }
 
+int findDuplicateEntry(std::vector<int> v)
+{
+	if (v.size() == 0 || v.size() == 1) {
+		return 0;
+	}
+
+	if (v.size() == 2) {
+		if (v[0] == v[1]) {
+			return v[0];
+		}
+		else {
+			return 0;
+		}
+
+	}
+
+	for (int i = 0; i < v.size() - 1; ++i) {
+		for (int j = i + 1; j < v.size(); ++j) {
+			if (v[i] == v[j]) {
+				return v[i];
+			}
+		}
+	}
+
+	return 0;
+}
+
 void drawMapArray(SDL_Renderer* renderer, std::vector<std::vector<Tile>>& arrayMap)
 {
 	for (int i = 0; i < arrayMap.size(); ++i) {
@@ -232,6 +259,7 @@ void drawMapArray(SDL_Renderer* renderer, std::vector<std::vector<Tile>>& arrayM
 	}
 }
 
+// Possible partner calculation for 4 adjacent tiles
 void setPossiblePartner_4Pt(Tile* tilePtr)
 {
 	std::vector<int> altitudes;
@@ -256,6 +284,7 @@ void setPossiblePartner_4Pt(Tile* tilePtr)
 	}
 }
 
+// Possible partner calculation for 8 surronding tiles
 void setPossiblePartner_8Pt(Tile* tilePtr)
 {
 	std::vector<int> altitudes;
@@ -284,6 +313,40 @@ void setPossiblePartner_8Pt(Tile* tilePtr)
 		std::advance(begin, rand() % possiblePartners.size());
 		tilePtr->tileCoordinateZ = intToColor(*begin);
 		tilePtr->setColor();
+	}
+}
+
+// Possible partner calculation for 4 adjacent tiles, if two are identical, force that one
+// To be used with snake algorithm; never has more than two partners
+void setCoherentPossiblePartner_4Pt(Tile* tilePtr)
+{
+	std::vector<int> altitudes;
+
+	for (int i = 0; i < (tilePtr->neighbors).size(); ++i) {
+		Tile* neighborPtr = tilePtr->neighbors[i];
+		if (neighborPtr != nullptr && neighborPtr->tileCoordinateZ != NONE) {
+			altitudes.push_back(neighborPtr->tileCoordinateZ);
+		}
+	}
+
+	int sameNumberNeighbors = findDuplicateEntry(altitudes);
+
+	if (sameNumberNeighbors != 0) {
+		tilePtr->tileCoordinateZ = intToColor(sameNumberNeighbors);
+		tilePtr->setColor();
+	}
+	else {
+		std::set<int> possiblePartners = intersectSets(altitudes);
+
+		if (possiblePartners.size() == 0) {
+			return;
+		}
+		else {
+			auto begin = possiblePartners.begin();
+			std::advance(begin, rand() % possiblePartners.size());
+			tilePtr->tileCoordinateZ = intToColor(*begin);
+			tilePtr->setColor();
+		}
 	}
 }
 
@@ -373,6 +436,32 @@ void horizontalFill(std::vector<std::vector<Tile>>& arrayMap)
 
 }
 
+// Doesn't work particularly well due to indeterminacy of stack resolution
+
+void wfc_duplicate4pt(Tile* tPtr, bool init)
+{
+	if (tPtr == nullptr || (tPtr->tileCoordinateZ != NONE && !init)) {
+		return;
+	}
+
+	if (init) {
+		// Turns the first tile purple then changes it to a "accessible" tile i.e. one that participates in the actual tiling; 1, 2, 3, 4
+		tPtr->tileCoordinateZ = PURPLE;
+		tPtr->setColor();
+		tPtr->tileCoordinateZ = intToColor((rand() % 4) + 1);
+
+	}
+	else {
+
+		setCoherentPossiblePartner_4Pt(tPtr);
+	}
+
+	for (int i = 0; i < (tPtr->neighbors).size(); ++i) {
+		wfc_4pt(tPtr->neighbors[i], false);
+	}
+}
+
+
 // This algorithm runs up from the starting position and snakes around until the entire right quadrant has been filled in, then repeats the proces starting under the starting position and going left.
 void wfc_2snake(Tile* tPtr)
 {
@@ -434,5 +523,68 @@ void wfc_2snake(Tile* tPtr)
 	}
 
 	setPossiblePartner_4Pt(currentPtr);
+
+}
+
+void wfc_duplicate2snake(Tile* tPtr)
+{
+	Tile* currentPtr = tPtr;
+
+	bool init = true;
+	bool up = true;
+
+	// Checks if the snake has hit the upper right or lower right corner
+	while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[1] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[1] == nullptr && !up)) {
+		if (init) {
+			tPtr->tileCoordinateZ = PURPLE;
+			tPtr->setColor();
+			tPtr->tileCoordinateZ = intToColor((rand() % 4) + 1);
+			init = false;
+		}
+		else {
+			setCoherentPossiblePartner_4Pt(currentPtr);
+		}
+
+		if (up && currentPtr->neighbors[0] != nullptr) {
+			currentPtr = currentPtr->neighbors[0];
+		}
+		else if (up && currentPtr->neighbors[0] == nullptr) {
+			currentPtr = currentPtr->neighbors[1];
+			up = false;
+		}
+		else if (!up && currentPtr->neighbors[2] != nullptr) {
+			currentPtr = currentPtr->neighbors[2];
+		}
+		else if (!up && currentPtr->neighbors[2] == nullptr) {
+			currentPtr = currentPtr->neighbors[1];
+			up = true;
+		}
+	}
+
+	setCoherentPossiblePartner_4Pt(currentPtr);
+	currentPtr = tPtr;
+	up = false;
+
+	while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[3] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[3] == nullptr && !up)) {
+
+		if (currentPtr != tPtr) setCoherentPossiblePartner_4Pt(currentPtr);
+
+		if (up && currentPtr->neighbors[0] != nullptr) {
+			currentPtr = currentPtr->neighbors[0];
+		}
+		else if (up && currentPtr->neighbors[0] == nullptr) {
+			currentPtr = currentPtr->neighbors[3];
+			up = false;
+		}
+		else if (!up && currentPtr->neighbors[2] != nullptr) {
+			currentPtr = currentPtr->neighbors[2];
+		}
+		else if (!up && currentPtr->neighbors[2] == nullptr) {
+			currentPtr = currentPtr->neighbors[3];
+			up = true;
+		}
+	}
+
+	setCoherentPossiblePartner_4Pt(currentPtr);
 
 }

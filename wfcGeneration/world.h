@@ -55,12 +55,18 @@ void initializeCoordinates(std::vector<std::vector<Tile>>& arrayMap);
 void linkMapArray(std::vector<std::vector<Tile>>& arrayMap, bool linkDiagonal = false);
 void drawMapArray(SDL_Renderer* renderer, std::vector<std::vector<Tile>>& arrayMap);
 
+void setPossiblePartner_4Pt(Tile* tilePtr);
+void setPossiblePartner_8Pt(Tile* tilePtr);
+void setCoherentPossiblePartner_4Pt(Tile* tilePtr);
+
 std::set<int> returnSet(int n);
 std::set<int> intersectTwoSets(std::set<int> a, std::set<int> b);
 std::set<int> intersectSets(std::vector<int> altitudes);
 
 void wfc_4pt(Tile* tPtr, bool init);
+void wfc_duplicate4pt(Tile* tPtr, bool init);
 void wfc_8pt(Tile* tPtr, bool init);
 void wfc_2snake(Tile* tPtr);
+void wfc_duplicate2snake(Tile* tPtr);
 void verticalFill(std::vector<std::vector<Tile>>& arrayMap);
 void horizontalFill(std::vector<std::vector<Tile>>& arrayMap);
