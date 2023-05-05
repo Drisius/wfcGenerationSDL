@@ -10,7 +10,7 @@
 
 enum Color
 {
-	NONE, BLUE, YELLOW, GREEN, RED, BLACK, PURPLE
+	NONE, BLUE, YELLOW, GREEN, RED, BROWN, ORANGE, PURPLE
 };
 
 const std::map<int, std::set<int>> partners =	{
@@ -18,10 +18,24 @@ const std::map<int, std::set<int>> partners =	{
 													{1, {1, 2}},
 													{2, {1, 2, 3}},
 													{3, {2, 3, 4}},
-													{4, {3, 4}}
-													// ,{5, {4, 5}} -- More kinds of terrain makes it harder to place consistently
+													{4, {3, 4, 5}}
+													,{5, {4, 5, 6}} // -- More kinds of terrain makes it harder to place consistently
+													,{6, {5, 6}}
 
 												};
+
+const std::vector<int> tileChance = {90, 70, 50, 50, 70, 50};
+
+const std::vector<std::vector<int>> transitionMatrix =	{
+														
+															{50, 10, 10, 10, 10, 10},
+															{10, 50, 10, 10, 10, 10},
+															{10, 10, 50, 10, 10, 10},
+															{10, 10, 10, 50, 10, 10},
+															{10, 10, 10, 10, 50, 10},
+															{10, 10, 10, 10, 10, 50}
+
+														};
 
 struct Tile
 {
@@ -30,6 +44,7 @@ struct Tile
 	std::vector<Tile*> neighbors = {nullptr, nullptr, nullptr, nullptr};
 	std::vector<Tile*> dNeighbors = {nullptr, nullptr, nullptr, nullptr};
 
+	int maxHeight = 6;
 	int tileCoordinateX = 0;
 	int tileCoordinateY = 0;
 	Color tileCoordinateZ = NONE;
@@ -50,12 +65,15 @@ struct Tile
 
 Color intToColor(int n);
 
+int randRangeInclusive(int min, int max);
+
 std::vector<std::vector<Tile>> initializeVector(int X, int Y, int size, bool randomizeColors);
 void initializeCoordinates(std::vector<std::vector<Tile>>& arrayMap);
 void linkMapArray(std::vector<std::vector<Tile>>& arrayMap, bool linkDiagonal = false);
 void drawMapArray(SDL_Renderer* renderer, std::vector<std::vector<Tile>>& arrayMap);
 
 void setPossiblePartner_4Pt(Tile* tilePtr);
+void setPossibleWeightedPartner_4Pt(Tile* tilePtr);
 void setPossiblePartner_8Pt(Tile* tilePtr);
 void setCoherentPossiblePartner_4Pt(Tile* tilePtr);
 
@@ -64,9 +82,11 @@ std::set<int> intersectTwoSets(std::set<int> a, std::set<int> b);
 std::set<int> intersectSets(std::vector<int> altitudes);
 
 void wfc_4pt(Tile* tPtr, bool init);
+void wfc_4pt_weighted(Tile* tPtr, bool init);
 void wfc_duplicate4pt(Tile* tPtr, bool init);
 void wfc_8pt(Tile* tPtr, bool init);
 void wfc_2snake(Tile* tPtr);
 void wfc_duplicate2snake(Tile* tPtr);
+void wfc_2snake_weighted(Tile* tPtr);
 void verticalFill(std::vector<std::vector<Tile>>& arrayMap);
 void horizontalFill(std::vector<std::vector<Tile>>& arrayMap);

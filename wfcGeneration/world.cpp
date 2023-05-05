@@ -3,9 +3,9 @@
 Tile::Tile(int size, bool randomizeColors)
 {	
 	if (randomizeColors) {
-		r = rand() % 256;
-		g = rand() % 256;
-		b = rand() % 256;
+		r = randRangeInclusive(0, 255);
+		g = randRangeInclusive(0, 255);
+		b = randRangeInclusive(0, 255);
 	}
 
 	tileSize = size;
@@ -55,9 +55,9 @@ void Tile::setColor()
 		g = 255;
 		b = 0;
 		break;
-	case BLACK:
-		r = 0;
-		g = 0;
+	case BROWN:
+		r = 128;
+		g = 64;
 		b = 0;
 		break;
 	case PURPLE:
@@ -65,14 +65,34 @@ void Tile::setColor()
 		g = 0;
 		b = 255;
 		break;
+	case ORANGE:
+		r = 255;
+		g = 128;
+		b = 0;
+		break;
 	default:
 		break;
 	}
 }
 
+int randRangeInclusive(int min, int max)
+{
+	return rand() % (max - min + 1) + min;
+}
+
+
 Color intToColor(int n) {
 	switch (n)
 	{
+	case(7):
+		return PURPLE;
+		break;
+	case(6):
+		return ORANGE;
+		break;
+	case(5):
+		return BROWN;
+		break;
 	case(4):
 		return RED;
 		break;
@@ -278,9 +298,46 @@ void setPossiblePartner_4Pt(Tile* tilePtr)
 	}
 	else {
 		auto begin = possiblePartners.begin();
-		std::advance(begin, rand() % possiblePartners.size());
+		std::advance(begin, randRangeInclusive(0, (int) possiblePartners.size() - 1));
 		tilePtr->tileCoordinateZ = intToColor(*begin);
 		tilePtr->setColor();
+	}
+}
+
+// Gives a weighted chance to place more tiles
+
+void setPossibleWeightedPartner_4Pt(Tile* tilePtr)
+{
+	std::vector<int> altitudes;
+
+	for (int i = 0; i < (tilePtr->neighbors).size(); ++i) {
+		Tile* neighborPtr = tilePtr->neighbors[i];
+		if (neighborPtr != nullptr && neighborPtr->tileCoordinateZ != NONE) {
+			altitudes.push_back(neighborPtr->tileCoordinateZ);
+		}
+	}
+
+	std::set<int> possiblePartners = intersectSets(altitudes);
+
+	if (possiblePartners.size() == 0) {
+		return;
+	}
+	else {
+		auto begin = possiblePartners.begin();
+
+		while (tilePtr->tileCoordinateZ == NONE) {
+			auto offset = begin;
+			std::advance(offset, randRangeInclusive(0, (int)possiblePartners.size() - 1));
+
+			if (randRangeInclusive(0, 100) > tileChance[(*offset) + 1]) {
+				tilePtr->tileCoordinateZ = intToColor(*offset);
+				tilePtr->setColor();
+			}
+			else {
+				offset = begin;
+				std::advance(offset, randRangeInclusive(0, (int)possiblePartners.size() - 1));
+			}
+		}
 	}
 }
 
@@ -310,7 +367,7 @@ void setPossiblePartner_8Pt(Tile* tilePtr)
 	}
 	else {
 		auto begin = possiblePartners.begin();
-		std::advance(begin, rand() % possiblePartners.size());
+		std::advance(begin, randRangeInclusive(0, (int) possiblePartners.size() - 1));
 		tilePtr->tileCoordinateZ = intToColor(*begin);
 		tilePtr->setColor();
 	}
@@ -343,7 +400,7 @@ void setCoherentPossiblePartner_4Pt(Tile* tilePtr)
 		}
 		else {
 			auto begin = possiblePartners.begin();
-			std::advance(begin, rand() % possiblePartners.size());
+			std::advance(begin, randRangeInclusive(0, (int) possiblePartners.size() - 1));
 			tilePtr->tileCoordinateZ = intToColor(*begin);
 			tilePtr->setColor();
 		}
@@ -363,11 +420,34 @@ void wfc_4pt(Tile* tPtr, bool init)
 		// Turns the first tile purple then changes it to a "accessible" tile i.e. one that participates in the actual tiling; 1, 2, 3, 4
 		tPtr->tileCoordinateZ = PURPLE; 
 		tPtr->setColor();
-		tPtr->tileCoordinateZ = intToColor((rand() % 4) + 1);
+		tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight));
 
 	} else {
 
 		setPossiblePartner_4Pt(tPtr);
+	}
+
+	for (int i = 0; i < (tPtr->neighbors).size(); ++i) {
+		wfc_4pt(tPtr->neighbors[i], false);
+	}
+}
+
+void wfc_4pt_weighted(Tile* tPtr, bool init)
+{
+	if (tPtr == nullptr || (tPtr->tileCoordinateZ != NONE && !init)) {
+		return;
+	}
+
+	if (init) {
+		// Turns the first tile purple then changes it to a "accessible" tile i.e. one that participates in the actual tiling; 1, 2, 3, 4
+		tPtr->tileCoordinateZ = PURPLE;
+		tPtr->setColor();
+		tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight));
+
+	}
+	else {
+
+		setPossibleWeightedPartner_4Pt(tPtr);
 	}
 
 	for (int i = 0; i < (tPtr->neighbors).size(); ++i) {
@@ -387,7 +467,7 @@ void wfc_8pt(Tile* tPtr, bool init)
 		// Turns the first tile purple then changes it to a "accessible" tile i.e. one that participates in the actual tiling; 1, 2, 3, 4
 		tPtr->tileCoordinateZ = PURPLE;
 		tPtr->setColor();
-		tPtr->tileCoordinateZ = intToColor((rand() % 4) + 1);
+		tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight));
 
 	}
 	else {
@@ -410,7 +490,7 @@ void verticalFill(std::vector <std::vector<Tile>>& arrayMap)
 	}
 
 	for (int i = 0; i < arrayMap.size(); ++i) {
-		for (int j = 0; j < arrayMap.size() - 2; ++j) {
+		for (int j = 0; j < arrayMap[i].size() - 2; ++j) {
 			if (arrayMap[i][j].tileCoordinateZ == arrayMap[i][j + 2].tileCoordinateZ) {
 				arrayMap[i][j + 1].tileCoordinateZ = arrayMap[i][j].tileCoordinateZ;
 				(arrayMap[i][j + 1]).setColor();
@@ -426,7 +506,7 @@ void horizontalFill(std::vector<std::vector<Tile>>& arrayMap)
 	}
 
 	for (int i = 0; i < arrayMap.size() - 2; ++i) {
-		for (int j = 0; j < arrayMap.size(); ++j) {
+		for (int j = 0; j < arrayMap[i].size(); ++j) {
 			if (arrayMap[i][j].tileCoordinateZ == arrayMap[i + 2][j].tileCoordinateZ) {
 				arrayMap[i + 1][j].tileCoordinateZ = arrayMap[i][j].tileCoordinateZ;
 				(arrayMap[i + 1][j]).setColor();
@@ -448,7 +528,7 @@ void wfc_duplicate4pt(Tile* tPtr, bool init)
 		// Turns the first tile purple then changes it to a "accessible" tile i.e. one that participates in the actual tiling; 1, 2, 3, 4
 		tPtr->tileCoordinateZ = PURPLE;
 		tPtr->setColor();
-		tPtr->tileCoordinateZ = intToColor((rand() % 4) + 1);
+		tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight));
 
 	}
 	else {
@@ -475,7 +555,7 @@ void wfc_2snake(Tile* tPtr)
 		if (init) {
 			tPtr->tileCoordinateZ = PURPLE;
 			tPtr->setColor();
-			tPtr->tileCoordinateZ = intToColor((rand() % 4) + 1);
+			tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight));
 			init = false;
 		}
 		else {
@@ -538,7 +618,7 @@ void wfc_duplicate2snake(Tile* tPtr)
 		if (init) {
 			tPtr->tileCoordinateZ = PURPLE;
 			tPtr->setColor();
-			tPtr->tileCoordinateZ = intToColor((rand() % 4) + 1);
+			tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight));
 			init = false;
 		}
 		else {
@@ -586,5 +666,68 @@ void wfc_duplicate2snake(Tile* tPtr)
 	}
 
 	setCoherentPossiblePartner_4Pt(currentPtr);
+
+}
+
+void wfc_2snake_weighted(Tile* tPtr)
+{
+	Tile* currentPtr = tPtr;
+
+	bool init = true;
+	bool up = true;
+
+	// Checks if the snake has hit the upper right or lower right corner
+	while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[1] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[1] == nullptr && !up)) {
+		if (init) {
+			tPtr->tileCoordinateZ = PURPLE;
+			tPtr->setColor();
+			tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight));
+			init = false;
+		}
+		else {
+			setPossibleWeightedPartner_4Pt(currentPtr);
+		}
+
+		if (up && currentPtr->neighbors[0] != nullptr) {
+			currentPtr = currentPtr->neighbors[0];
+		}
+		else if (up && currentPtr->neighbors[0] == nullptr) {
+			currentPtr = currentPtr->neighbors[1];
+			up = false;
+		}
+		else if (!up && currentPtr->neighbors[2] != nullptr) {
+			currentPtr = currentPtr->neighbors[2];
+		}
+		else if (!up && currentPtr->neighbors[2] == nullptr) {
+			currentPtr = currentPtr->neighbors[1];
+			up = true;
+		}
+	}
+
+	setPossibleWeightedPartner_4Pt(currentPtr);
+	currentPtr = tPtr;
+	up = false;
+
+	while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[3] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[3] == nullptr && !up)) {
+
+		if (currentPtr != tPtr) setPossibleWeightedPartner_4Pt(currentPtr);
+
+		if (up && currentPtr->neighbors[0] != nullptr) {
+			currentPtr = currentPtr->neighbors[0];
+		}
+		else if (up && currentPtr->neighbors[0] == nullptr) {
+			currentPtr = currentPtr->neighbors[3];
+			up = false;
+		}
+		else if (!up && currentPtr->neighbors[2] != nullptr) {
+			currentPtr = currentPtr->neighbors[2];
+		}
+		else if (!up && currentPtr->neighbors[2] == nullptr) {
+			currentPtr = currentPtr->neighbors[3];
+			up = true;
+		}
+	}
+
+	setPossibleWeightedPartner_4Pt(currentPtr);
 
 }

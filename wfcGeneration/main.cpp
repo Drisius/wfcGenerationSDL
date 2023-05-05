@@ -37,22 +37,25 @@ int main()
 	Tile* randomTile = &mapArray[rand() % mapArray.size()][rand() % mapArray[1].size()];
 
 	// wfc_2snake(randomTile);
+	wfc_2snake_weighted(randomTile);
 
 	// Turns the first tile purple then changes it to a "accessible" tile i.e. one that participates in the actual tiling; 1, 2, 3, 4
 
 	//wfc_4pt(randomTile, true);
 	/*drawMapArray(renderer, mapArray);
 	SDL_RenderPresent(renderer);
-	Sleep(5000);
+	Sleep(5000);*/
 
-	verticalFill(mapArray);
-	horizontalFill(mapArray);*/
+	//verticalFill(mapArray);
+	//horizontalFill(mapArray);
 
 	// wfc_8pt(randomTile, true);
 
 	//wfc_duplicate2snake(randomTile);
 
-	wfc_duplicate4pt(randomTile, true);
+	//wfc_duplicate4pt(randomTile, true);
+
+	// wfc_4pt_weighted(randomTile, true);
 
 	drawMapArray(renderer, mapArray);
 	SDL_RenderPresent(renderer);
