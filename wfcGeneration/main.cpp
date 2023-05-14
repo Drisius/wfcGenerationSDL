@@ -46,12 +46,14 @@ int main()
 	SDL_RenderPresent(renderer);
 	Sleep(5000);*/
 
-	//verticalFill(mapArray);
-	//horizontalFill(mapArray);
+	doubleFill(mapArray, 5);
+
+	tileFill(mapArray, 2, 20, 1);
+	tileFillAllDirections(mapArray, 2, 20, 1);
 
 	// wfc_8pt(randomTile, true);
 
-	//wfc_duplicate2snake(randomTile);
+	// wfc_duplicate2snake(randomTile);
 
 	//wfc_duplicate4pt(randomTile, true);
 

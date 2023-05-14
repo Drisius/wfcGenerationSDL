@@ -7,10 +7,12 @@
 #include <algorithm>
 #include <vector>
 #include <iterator>
+#include <windows.h>
+#include <string>
 
 enum Color
 {
-	NONE, BLUE, YELLOW, GREEN, RED, BROWN, ORANGE, PURPLE
+	NONE, BLUE, LIGHT_BLUE, YELLOW, GREEN, RED, BROWN, PURPLE
 };
 
 const std::map<int, std::set<int>> partners =	{
@@ -24,7 +26,7 @@ const std::map<int, std::set<int>> partners =	{
 
 												};
 
-const std::vector<int> tileChance = {90, 70, 50, 50, 70, 50};
+const std::vector<int> tileChance = {0, 70, 50, 50, 60, 60};
 
 const std::vector<std::vector<int>> transitionMatrix =	{
 														
@@ -61,6 +63,8 @@ struct Tile
 	Tile(int x, int y, int red, int green, int blue);
 	void drawTile(SDL_Renderer* renderer);
 	void setColor();
+
+	bool operator == (const Tile &t);
 };
 
 Color intToColor(int n);
@@ -69,6 +73,8 @@ int randRangeInclusive(int min, int max);
 
 std::vector<std::vector<Tile>> initializeVector(int X, int Y, int size, bool randomizeColors);
 void initializeCoordinates(std::vector<std::vector<Tile>>& arrayMap);
+int convertCoordinateToGrid(int coordinate);
+int convertGridToCoordinate(int gridCoordinate);
 void linkMapArray(std::vector<std::vector<Tile>>& arrayMap, bool linkDiagonal = false);
 void drawMapArray(SDL_Renderer* renderer, std::vector<std::vector<Tile>>& arrayMap);
 
@@ -88,5 +94,11 @@ void wfc_8pt(Tile* tPtr, bool init);
 void wfc_2snake(Tile* tPtr);
 void wfc_duplicate2snake(Tile* tPtr);
 void wfc_2snake_weighted(Tile* tPtr);
-void verticalFill(std::vector<std::vector<Tile>>& arrayMap);
-void horizontalFill(std::vector<std::vector<Tile>>& arrayMap);
+void verticalFill(std::vector<std::vector<Tile>>& arrayMap, int passes);
+void horizontalFill(std::vector<std::vector<Tile>>& arrayMap, int passes);
+void doubleFill(std::vector<std::vector<Tile>>& arrayMap, int passes);
+bool containedInVector(std::vector<Tile> v, Tile t);
+void floodFill(Tile tile, std::vector<Tile>& vectorFoundTiles);
+void tileFill(std::vector<std::vector<Tile>>& arrayMap, int tileType, int targetNum, int targetType);
+void floodFillAllDirections(Tile tile, std::vector<Tile>& vectorFoundTiles);
+void tileFillAllDirections(std::vector<std::vector<Tile>>& arrayMap, int tileType, int targetNum, int targetType);

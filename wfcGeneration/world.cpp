@@ -1,4 +1,5 @@
 #include "world.h"
+#include "main.h"
 
 Tile::Tile(int size, bool randomizeColors)
 {	
@@ -18,6 +19,15 @@ Tile::Tile(int x, int y, int red, int green, int blue)
 	r = red;
 	g = green;
 	b = blue;
+}
+
+bool Tile::operator == (const Tile &t)
+{
+	if (tileCoordinateX == t.tileCoordinateX && tileCoordinateY == t.tileCoordinateY) {
+		return true;
+	}
+
+	return false;
 }
 
 void Tile::drawTile(SDL_Renderer* renderer)
@@ -65,10 +75,10 @@ void Tile::setColor()
 		g = 0;
 		b = 255;
 		break;
-	case ORANGE:
-		r = 255;
-		g = 128;
-		b = 0;
+	case LIGHT_BLUE:
+		r = 0;
+		g = 255;
+		b = 255;
 		break;
 	default:
 		break;
@@ -88,19 +98,19 @@ Color intToColor(int n) {
 		return PURPLE;
 		break;
 	case(6):
-		return ORANGE;
-		break;
-	case(5):
 		return BROWN;
 		break;
-	case(4):
+	case(5):
 		return RED;
 		break;
-	case(3):
+	case(4):
 		return GREEN;
 		break;
-	case(2):
+	case(3):
 		return YELLOW;
+		break;
+	case(2):
+		return LIGHT_BLUE;
 		break;
 	case(1):
 		return BLUE;
@@ -134,6 +144,16 @@ void initializeCoordinates(std::vector<std::vector<Tile>>& arrayMap)
 			(arrayMap[i][j]).tileCoordinateY = j * (arrayMap[i][j]).tileSize;
 		}
 	}
+}
+
+int convertCoordinateToGrid(int coordinate)
+{
+	return coordinate / SPRITE_SIZE;
+}
+
+int convertGridToCoordinate(int gridCoordinate)
+{
+	return gridCoordinate * SPRITE_SIZE;
 }
 
 void linkMapArray(std::vector<std::vector<Tile>>& arrayMap, bool linkDiagonal)
@@ -182,7 +202,6 @@ void linkMapArray(std::vector<std::vector<Tile>>& arrayMap, bool linkDiagonal)
 		}
 	}
 }
-
 
 std::set<int> returnSet(int n)
 {
@@ -304,7 +323,7 @@ void setPossiblePartner_4Pt(Tile* tilePtr)
 	}
 }
 
-// Gives a weighted chance to place more tiles
+// Gives a weighted chance to place more tiles relative to itself 
 
 void setPossibleWeightedPartner_4Pt(Tile* tilePtr)
 {
@@ -327,21 +346,21 @@ void setPossibleWeightedPartner_4Pt(Tile* tilePtr)
 
 		while (tilePtr->tileCoordinateZ == NONE) {
 			auto offset = begin;
-			std::advance(offset, randRangeInclusive(0, (int)possiblePartners.size() - 1));
+			std::advance(offset, randRangeInclusive(0, (int) possiblePartners.size() - 1));
 
-			if (randRangeInclusive(0, 100) > tileChance[(*offset) + 1]) {
+			if (randRangeInclusive(0, 100) > tileChance[(*offset) - 1]) {
 				tilePtr->tileCoordinateZ = intToColor(*offset);
 				tilePtr->setColor();
 			}
 			else {
 				offset = begin;
-				std::advance(offset, randRangeInclusive(0, (int)possiblePartners.size() - 1));
+				std::advance(offset, randRangeInclusive(0, (int) possiblePartners.size() - 1));
 			}
 		}
 	}
 }
 
-// Possible partner calculation for 8 surronding tiles
+// Possible partner calculation for 8 surrounding tiles
 void setPossiblePartner_8Pt(Tile* tilePtr)
 {
 	std::vector<int> altitudes;
@@ -483,37 +502,185 @@ void wfc_8pt(Tile* tPtr, bool init)
 	}
 }
 
-void verticalFill(std::vector <std::vector<Tile>>& arrayMap)
+void verticalFill(std::vector <std::vector<Tile>>& arrayMap, int passes)
 {
-	if (arrayMap[1].size() < 3) {
+	if (arrayMap[1].size() < 3 || passes < 1) {
 		return;
 	}
 
-	for (int i = 0; i < arrayMap.size(); ++i) {
-		for (int j = 0; j < arrayMap[i].size() - 2; ++j) {
-			if (arrayMap[i][j].tileCoordinateZ == arrayMap[i][j + 2].tileCoordinateZ) {
-				arrayMap[i][j + 1].tileCoordinateZ = arrayMap[i][j].tileCoordinateZ;
-				(arrayMap[i][j + 1]).setColor();
+	for (int timesPassed = 0; timesPassed < passes; ++timesPassed) {
+		for (int i = 0; i < arrayMap.size(); ++i) {
+			for (int j = 0; j < arrayMap[i].size() - 2; ++j) {
+				if (arrayMap[i][j].tileCoordinateZ == arrayMap[i][j + 2].tileCoordinateZ) {
+					arrayMap[i][j + 1].tileCoordinateZ = arrayMap[i][j].tileCoordinateZ;
+					(arrayMap[i][j + 1]).setColor();
+				}
 			}
 		}
 	}
 }
 
-void horizontalFill(std::vector<std::vector<Tile>>& arrayMap)
+void horizontalFill(std::vector<std::vector<Tile>>& arrayMap, int passes)
 {
-	if (arrayMap.size() < 3) {
+	if (arrayMap.size() < 3 || passes < 1) {
 		return;
 	}
 
-	for (int i = 0; i < arrayMap.size() - 2; ++i) {
-		for (int j = 0; j < arrayMap[i].size(); ++j) {
-			if (arrayMap[i][j].tileCoordinateZ == arrayMap[i + 2][j].tileCoordinateZ) {
-				arrayMap[i + 1][j].tileCoordinateZ = arrayMap[i][j].tileCoordinateZ;
-				(arrayMap[i + 1][j]).setColor();
+	for (int timesPassed = 0; timesPassed < passes; ++timesPassed) {
+		for (int i = 0; i < arrayMap.size() - 2; ++i) {
+			for (int j = 0; j < arrayMap[i].size(); ++j) {
+				if (arrayMap[i][j].tileCoordinateZ == arrayMap[i + 2][j].tileCoordinateZ) {
+					arrayMap[i + 1][j].tileCoordinateZ = arrayMap[i][j].tileCoordinateZ;
+					(arrayMap[i + 1][j]).setColor();
+				}
+			}
+		}
+	}
+}
+
+void doubleFill(std::vector<std::vector<Tile>>& arrayMap, int passes)
+{
+	if (arrayMap[1].size() < 3 || passes < 1) {
+		return;
+	}
+
+	for (int timesPassed = 0; timesPassed < passes; ++timesPassed) {
+		for (int i = 0; i < arrayMap.size(); ++i) {
+			for (int j = 0; j < arrayMap[i].size() - 2; ++j) {
+				if (arrayMap[i][j].tileCoordinateZ == arrayMap[i][j + 2].tileCoordinateZ) {
+					arrayMap[i][j + 1].tileCoordinateZ = arrayMap[i][j].tileCoordinateZ;
+					(arrayMap[i][j + 1]).setColor();
+				}
 			}
 		}
 	}
 
+	for (int timesPassed = 0; timesPassed < passes; ++timesPassed) {
+		for (int i = 0; i < arrayMap.size() - 2; ++i) {
+			for (int j = 0; j < arrayMap[i].size(); ++j) {
+				if (arrayMap[i][j].tileCoordinateZ == arrayMap[i + 2][j].tileCoordinateZ) {
+					arrayMap[i + 1][j].tileCoordinateZ = arrayMap[i][j].tileCoordinateZ;
+					(arrayMap[i + 1][j]).setColor();
+				}
+			}
+		}
+	}
+}
+
+bool containedInVector(std::vector<Tile> v, Tile t)
+{
+	if (std::find(v.begin(), v.end(), t) != v.end()) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+// Uses a tile T's height to search for all tiles next to it with the same height
+void floodFill(Tile tile, std::vector<Tile>& vectorFoundTiles)
+{
+	if (tile.tileCoordinateZ == 0) {
+		return;
+	}
+
+	if (vectorFoundTiles.size() > 0 && tile.tileCoordinateZ != vectorFoundTiles[0].tileCoordinateZ) {
+		return;
+	}
+
+	if (vectorFoundTiles.size() == 0) {
+		vectorFoundTiles.push_back(tile);
+	}
+	else {
+		vectorFoundTiles.push_back(tile);
+	}
+
+	for (int partner = 0; partner < tile.neighbors.size(); ++partner) {
+		if (tile.neighbors[partner] != nullptr && !containedInVector(vectorFoundTiles, *(tile.neighbors[partner]))) {
+			floodFill(*tile.neighbors[partner], vectorFoundTiles);
+		}
+	}
+}
+
+
+// Goes across the map and replaces all areas (adjacent partners) with tileType under size targetNum with targetType
+void tileFill(std::vector<std::vector<Tile>>& arrayMap, int tileType, int targetNum, int targetType)
+{
+	for (int i = 0; i < arrayMap.size(); ++i) {
+		for (int j = 0; j < arrayMap[i].size(); ++j) {
+			if (arrayMap[i][j].tileCoordinateZ != tileType) {
+				continue;
+			}
+
+			std::vector<Tile> foundTiles = {};
+
+			floodFill(arrayMap[i][j], foundTiles);
+			/*OutputDebugStringA(std::to_string(foundTiles.size()).c_str());
+			OutputDebugStringA(" ");*/
+			if (foundTiles.size() <= targetNum) {
+				for (int k = 0; k < foundTiles.size(); ++k) {
+					arrayMap[convertCoordinateToGrid(foundTiles[k].tileCoordinateX)][convertCoordinateToGrid(foundTiles[k].tileCoordinateY)].tileCoordinateZ = intToColor(targetType);
+					arrayMap[convertCoordinateToGrid(foundTiles[k].tileCoordinateX)][convertCoordinateToGrid(foundTiles[k].tileCoordinateY)].setColor();
+				}
+			}
+		}
+	}
+}
+
+// Uses a tile T's height to search for all tiles around it with the same height
+void floodFillAllDirections(Tile tile, std::vector<Tile>& vectorFoundTiles)
+{
+	if (tile.tileCoordinateZ == 0) {
+		return;
+	}
+
+	if (vectorFoundTiles.size() > 0 && tile.tileCoordinateZ != vectorFoundTiles[0].tileCoordinateZ) {
+		return;
+	}
+
+	if (vectorFoundTiles.size() == 0) {
+		vectorFoundTiles.push_back(tile);
+	}
+	else {
+		vectorFoundTiles.push_back(tile);
+	}
+
+	for (int partner = 0; partner < tile.neighbors.size(); ++partner) {
+		if (tile.neighbors[partner] != nullptr && !containedInVector(vectorFoundTiles, *(tile.neighbors[partner]))) {
+			floodFillAllDirections(*tile.neighbors[partner], vectorFoundTiles);
+		}
+	}
+
+	for (int partner = 0; partner < tile.dNeighbors.size(); ++partner) {
+		if (tile.dNeighbors[partner] != nullptr && !containedInVector(vectorFoundTiles, *(tile.dNeighbors[partner]))) {
+			floodFillAllDirections(*tile.dNeighbors[partner], vectorFoundTiles);
+		}
+	}
+}
+
+
+// Goes across the map and replaces all areas with tileType under size targetNum with targetType
+void tileFillAllDirections(std::vector<std::vector<Tile>>& arrayMap, int tileType, int targetNum, int targetType)
+{
+	for (int i = 0; i < arrayMap.size(); ++i) {
+		for (int j = 0; j < arrayMap[i].size(); ++j) {
+			if (arrayMap[i][j].tileCoordinateZ != tileType) {
+				continue;
+			}
+
+			std::vector<Tile> foundTiles = {};
+
+			floodFillAllDirections(arrayMap[i][j], foundTiles);
+			/*OutputDebugStringA(std::to_string(foundTiles.size()).c_str());
+			OutputDebugStringA(" ");*/
+			if (foundTiles.size() <= targetNum){
+				for (int k = 0; k < foundTiles.size(); ++k) {
+					arrayMap[convertCoordinateToGrid(foundTiles[k].tileCoordinateX)][convertCoordinateToGrid(foundTiles[k].tileCoordinateY)].tileCoordinateZ = intToColor(targetType);
+					arrayMap[convertCoordinateToGrid(foundTiles[k].tileCoordinateX)][convertCoordinateToGrid(foundTiles[k].tileCoordinateY)].setColor();
+				}
+			}
+		}
+	}
 }
 
 // Doesn't work particularly well due to indeterminacy of stack resolution
