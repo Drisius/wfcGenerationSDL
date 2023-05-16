@@ -78,7 +78,8 @@ std::vector<std::vector<Tile>> initializeVector(int X, int Y, int size, bool ran
 void initializeCoordinates(std::vector<std::vector<Tile>>& arrayMap);
 int convertCoordinateToGrid(int coordinate);
 int convertGridToCoordinate(int gridCoordinate);
-void linkMapArray(std::vector<std::vector<Tile>>& arrayMap, bool linkDiagonal = false);
+int countEmptyTiles(std::vector<std::vector<Tile>>& arrayMap);
+void linkMapArray(std::vector<std::vector<Tile>>& arrayMap);
 void drawMapArray(SDL_Renderer* renderer, std::vector<std::vector<Tile>>& arrayMap);
 
 void setPossiblePartner_4Pt(Tile* tilePtr);
@@ -97,8 +98,10 @@ void wfc_8pt(Tile* tPtr, bool init);
 void wfc_2snake(Tile* tPtr);
 void wfc_duplicate2snake(Tile* tPtr);
 void wfc_2snake_weighted(Tile* tPtr);
+void wfc_lock(std::vector<std::vector<Tile>>& arrayMap);
 
 bool isValidTile(int i, int j);
+bool isEmptyAdjacentTile(Tile t);
 int gol_checkPartnersSea(std::vector<std::vector<Tile>>& arrayMap, int i, int j);
 void gol_seedMapOcean(std::vector<std::vector<Tile>>& arrayMap);
 void gol_updateMap(std::vector<std::vector<Tile>>& arrayMap, int amountPasses);

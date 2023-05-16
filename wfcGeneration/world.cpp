@@ -161,7 +161,22 @@ int convertGridToCoordinate(int gridCoordinate)
 	return gridCoordinate * SPRITE_SIZE;
 }
 
-void linkMapArray(std::vector<std::vector<Tile>>& arrayMap, bool linkDiagonal)
+int countEmptyTiles(std::vector<std::vector<Tile>>& arrayMap)
+{
+	int count = 0;
+
+	for (int i = 0; i < arrayMap.size(); ++i) {
+		for (int j = 0; j < arrayMap[i].size(); ++j) {
+			if ((arrayMap[i][j]).tileCoordinateZ == NONE) {
+				++count;
+			}
+		}
+	}
+
+	return count;
+}
+
+void linkMapArray(std::vector<std::vector<Tile>>& arrayMap)
 {
 	for (int i = 0; i < arrayMap.size(); ++i) {
 		for (int j = 0; j < arrayMap[i].size(); ++j) {
@@ -184,28 +199,27 @@ void linkMapArray(std::vector<std::vector<Tile>>& arrayMap, bool linkDiagonal)
 		}
 	}
 
-	if (linkDiagonal) {
-		for (int i = 0; i < arrayMap.size(); ++i) {
-			for (int j = 0; j < arrayMap[i].size(); ++j) {
+	for (int i = 0; i < arrayMap.size(); ++i) {
+		for (int j = 0; j < arrayMap[i].size(); ++j) {
 
-				if (i - 1 >= 0 && j - 1 >= 0) {
-					(arrayMap[i][j]).neighbors[3] = &arrayMap[i - 1][j];
-				}
+			if (i - 1 >= 0 && j - 1 >= 0) {
+				(arrayMap[i][j]).neighbors[3] = &arrayMap[i - 1][j];
+			}
 
-				if (i + 1 < arrayMap.size() && j + 1 < arrayMap[i].size()) {
-					(arrayMap[i][j]).neighbors[1] = &arrayMap[i + 1][j];
-				}
+			if (i + 1 < arrayMap.size() && j + 1 < arrayMap[i].size()) {
+				(arrayMap[i][j]).neighbors[1] = &arrayMap[i + 1][j];
+			}
 
-				if (i + 1 < arrayMap.size() && j - 1 >= 0) {
-					(arrayMap[i][j]).neighbors[0] = &arrayMap[i][j - 1];
-				}
+			if (i + 1 < arrayMap.size() && j - 1 >= 0) {
+				(arrayMap[i][j]).neighbors[0] = &arrayMap[i][j - 1];
+			}
 
-				if (i - 1 >= 0 && j + 1 < arrayMap[1].size()) {
-					(arrayMap[i][j]).neighbors[2] = &arrayMap[i][j + 1];
-				}
+			if (i - 1 >= 0 && j + 1 < arrayMap[1].size()) {
+				(arrayMap[i][j]).neighbors[2] = &arrayMap[i][j + 1];
 			}
 		}
 	}
+	
 }
 
 std::set<int> returnSet(int n)
@@ -851,9 +865,10 @@ void wfc_2snake_weighted(Tile* tPtr)
 	// Checks if the snake has hit the upper right or lower right corner
 	while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[1] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[1] == nullptr && !up)) {
 		if (init) {
-			tPtr->tileCoordinateZ = PURPLE;
+			// tPtr->tileCoordinateZ = PURPLE;
+			// tPtr->setColor();
+			tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight)); // randRangeInclusive(1, tPtr->maxHeight) for standard algorithm
 			tPtr->setColor();
-			tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight));
 			init = false;
 		}
 		else {
@@ -904,9 +919,52 @@ void wfc_2snake_weighted(Tile* tPtr)
 
 }
 
+// This essentially spins wfc_2_snake_weighted continuously until it finds an exactly satisfied configuration
+// Just, don't.
+void wfc_lock(std::vector<std::vector<Tile>>& arrayMap)
+{	
+	std::vector<Tile*> emptyPlaces;
+
+	for (std::vector<Tile> x : arrayMap) {
+		for (Tile y : x) {
+			if (y.tileCoordinateZ == NONE) {
+				emptyPlaces.push_back(&y);
+			}
+		}
+	}
+
+	Tile* startPtr = &arrayMap[rand() % arrayMap.size()][rand() % arrayMap[0].size()];
+	while (startPtr->tileCoordinateZ == BLUE || startPtr->tileCoordinateZ == LIGHT_BLUE) {
+		startPtr = &arrayMap[rand() % arrayMap.size()][rand() % arrayMap[0].size()];
+	}
+
+	while (countEmptyTiles(arrayMap) != 0) {
+
+		for (Tile* t : emptyPlaces) {
+			t->tileCoordinateZ = NONE;
+			t->setColor();
+		}
+
+		wfc_2snake_weighted(startPtr);
+	}
+}
+
 bool isValidTile(int i, int j)
 {
 	return !(i < 0 || i >= X_DIMENSION || j < 0 || j >= Y_DIMENSION);
+}
+
+bool isEmptyAdjacentTile(Tile t)
+{
+	if (t.tileCoordinateZ != NONE) return false;
+
+	for (Tile* neighbor : t.neighbors) {
+		if (neighbor != nullptr && neighbor->tileCoordinateZ != NONE) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 int gol_checkPartnersSea(std::vector<std::vector<Tile>>& arrayMap, int i, int j)

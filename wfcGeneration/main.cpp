@@ -32,9 +32,9 @@ int main()
 
 	mapArray = initializeVector(X_DIMENSION, Y_DIMENSION, SPRITE_SIZE, RANDOM_COLORS);
 	initializeCoordinates(mapArray);
-	linkMapArray(mapArray, false);
+	linkMapArray(mapArray);
 
-	Tile* randomTile = &mapArray[rand() % mapArray.size()][rand() % mapArray[1].size()];
+	Tile* randomTile = &mapArray[rand() % mapArray.size()][rand() % mapArray[0].size()];
 
 	//wfc_4pt_weighted(randomTile, true);
 	//wfc_2snake_weighted(randomTile);
@@ -51,7 +51,9 @@ int main()
 	SDL_RenderPresent(renderer);
 	Sleep(3000);
 
+	// wfc_grow_weighted(mapArray);
 	wfc_2snake_weighted(randomTile);
+	// wfc_lock(mapArray);
 	
 	drawMapArray(renderer, mapArray);
 	SDL_RenderPresent(renderer);
