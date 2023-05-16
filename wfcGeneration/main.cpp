@@ -36,28 +36,37 @@ int main()
 
 	Tile* randomTile = &mapArray[rand() % mapArray.size()][rand() % mapArray[1].size()];
 
-	// wfc_2snake(randomTile);
-	wfc_2snake_weighted(randomTile);
+	//wfc_4pt_weighted(randomTile, true);
+	//wfc_2snake_weighted(randomTile);
+	gol_seedMapOcean(mapArray);
 
-	// Turns the first tile purple then changes it to a "accessible" tile i.e. one that participates in the actual tiling; 1, 2, 3, 4
-
-	//wfc_4pt(randomTile, true);
-	/*drawMapArray(renderer, mapArray);
+	drawMapArray(renderer, mapArray);
 	SDL_RenderPresent(renderer);
-	Sleep(5000);*/
+	Sleep(3000);
+
+	//gol_updateMap(mapArray, GOL_UPDATE_PASSES);
+	gol_updateMapSnake(mapArray, GOL_UPDATE_PASSES);
+
+	drawMapArray(renderer, mapArray);
+	SDL_RenderPresent(renderer);
+	Sleep(3000);
+
+	wfc_2snake_weighted(randomTile);
+	
+	drawMapArray(renderer, mapArray);
+	SDL_RenderPresent(renderer);
+	Sleep(3000);
+
+	commonFill(mapArray);
+
+	drawMapArray(renderer, mapArray);
+	SDL_RenderPresent(renderer);
+	Sleep(3000);
 
 	doubleFill(mapArray, 5);
 
-	tileFill(mapArray, 2, 20, 1);
-	tileFillAllDirections(mapArray, 2, 20, 1);
-
-	// wfc_8pt(randomTile, true);
-
-	// wfc_duplicate2snake(randomTile);
-
-	//wfc_duplicate4pt(randomTile, true);
-
-	// wfc_4pt_weighted(randomTile, true);
+	// tileFill(mapArray, 2, 20, 1);
+	// tileFillAllDirections(mapArray, 2, 20, 1);
 
 	drawMapArray(renderer, mapArray);
 	SDL_RenderPresent(renderer);

@@ -80,6 +80,11 @@ void Tile::setColor()
 		g = 255;
 		b = 255;
 		break;
+	case NONE:
+		r = 0;
+		g = 0;
+		b = 0;
+		break;
 	default:
 		break;
 	}
@@ -897,4 +902,245 @@ void wfc_2snake_weighted(Tile* tPtr)
 
 	setPossibleWeightedPartner_4Pt(currentPtr);
 
+}
+
+bool isValidTile(int i, int j)
+{
+	return !(i < 0 || i >= X_DIMENSION || j < 0 || j >= Y_DIMENSION);
+}
+
+int gol_checkPartnersSea(std::vector<std::vector<Tile>>& arrayMap, int i, int j)
+{
+	int count = 0;
+
+	for (int offsetX = -1; offsetX < 2; ++offsetX) {
+		for (int offsetY = -1; offsetY < 2; ++offsetY) {
+			if (offsetX == 0 && offsetY == 0) continue;
+			if (isValidTile(i + offsetX, j + offsetY) && arrayMap[i + offsetX][j + offsetY].tileCoordinateZ == BLUE) {
+				++count;
+			}
+		}
+	}
+	// OutputDebugStringA(std::to_string(count).c_str());
+	return count;
+}
+
+void gol_seedMapOcean(std::vector<std::vector<Tile>>& arrayMap)
+{
+	for (int i = 0; i < arrayMap.size(); ++i) {
+		for (int j = 0; j < arrayMap[0].size(); ++j) {
+			if (randRangeInclusive(0, 100) <= BIRTH_RATE) {
+				(arrayMap[i][j]).tileCoordinateZ = BLUE;
+				(arrayMap[i][j]).setColor();
+			}
+		}
+	}
+}
+
+void gol_updateMap(std::vector<std::vector<Tile>>& arrayMap, int amountPasses)
+{
+	for (int i = 0; i < amountPasses; ++i){
+		for (int j = 0; j < arrayMap.size(); ++j) {
+			for (int k = 0; k < arrayMap[j].size(); ++k) {
+				if (gol_checkPartnersSea(arrayMap, j, k) >= BIRTH_DEATH_NUMBER) {
+					arrayMap[j][k].tileCoordinateZ = BLUE;
+					arrayMap[j][k].setColor();
+				}
+				else {
+					arrayMap[j][k].tileCoordinateZ = NONE;
+					arrayMap[j][k].setColor();
+				}
+			}
+		}
+	}
+}
+
+// Uses snake method to update map with GOL; final pass sets light blue edge around dark blue for wfc snake to build off 
+void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPasses)
+{
+	Tile* beginPtr = &arrayMap[rand() % arrayMap.size()][rand() % arrayMap[1].size()];
+
+	for (int i = 0; i < amountPasses; ++i) {
+		
+		Tile* currentPtr = beginPtr;
+		bool up = true;
+
+		// Checks if the snake has hit the upper right or lower right corner
+		while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[1] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[1] == nullptr && !up)) {
+			
+			if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
+				currentPtr->tileCoordinateZ = BLUE;
+				currentPtr->setColor();
+			}
+			else {
+				currentPtr->tileCoordinateZ = NONE;
+				currentPtr->setColor();
+			}
+
+			// snek
+			if (up && currentPtr->neighbors[0] != nullptr) {
+				currentPtr = currentPtr->neighbors[0];
+			}
+			else if (up && currentPtr->neighbors[0] == nullptr) {
+				currentPtr = currentPtr->neighbors[1];
+				up = false;
+			}
+			else if (!up && currentPtr->neighbors[2] != nullptr) {
+				currentPtr = currentPtr->neighbors[2];
+			}
+			else if (!up && currentPtr->neighbors[2] == nullptr) {
+				currentPtr = currentPtr->neighbors[1];
+				up = true;
+			}
+		}
+
+		if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
+			currentPtr->tileCoordinateZ = BLUE;
+			currentPtr->setColor();
+		}
+		else {
+			currentPtr->tileCoordinateZ = NONE;
+			currentPtr->setColor();
+		}
+
+		currentPtr = beginPtr;
+		up = false;
+
+		while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[3] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[3] == nullptr && !up)) {
+
+			if (currentPtr != beginPtr) {
+				if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
+					currentPtr->tileCoordinateZ = BLUE;
+					currentPtr->setColor();
+				}
+				else {
+					currentPtr->tileCoordinateZ = NONE;
+					currentPtr->setColor();
+				}
+			}
+
+			if (up && currentPtr->neighbors[0] != nullptr) {
+				currentPtr = currentPtr->neighbors[0];
+			}
+			else if (up && currentPtr->neighbors[0] == nullptr) {
+				currentPtr = currentPtr->neighbors[3];
+				up = false;
+			}
+			else if (!up && currentPtr->neighbors[2] != nullptr) {
+				currentPtr = currentPtr->neighbors[2];
+			}
+			else if (!up && currentPtr->neighbors[2] == nullptr) {
+				currentPtr = currentPtr->neighbors[3];
+				up = true;
+			}
+		}
+
+		if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
+			currentPtr->tileCoordinateZ = BLUE;
+			currentPtr->setColor();
+		}
+		else {
+			currentPtr->tileCoordinateZ = NONE;
+			currentPtr->setColor();
+		}
+	}
+
+	// Light blue edge
+
+	Tile* currentPtr = beginPtr;
+	bool up = true;
+
+	// Checks if the snake has hit the upper right or lower right corner
+	while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[1] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[1] == nullptr && !up)) {
+
+		if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
+			currentPtr->tileCoordinateZ = LIGHT_BLUE;
+			currentPtr->setColor();
+		}
+
+		// snek
+		if (up && currentPtr->neighbors[0] != nullptr) {
+			currentPtr = currentPtr->neighbors[0];
+		}
+		else if (up && currentPtr->neighbors[0] == nullptr) {
+			currentPtr = currentPtr->neighbors[1];
+			up = false;
+		}
+		else if (!up && currentPtr->neighbors[2] != nullptr) {
+			currentPtr = currentPtr->neighbors[2];
+		}
+		else if (!up && currentPtr->neighbors[2] == nullptr) {
+			currentPtr = currentPtr->neighbors[1];
+			up = true;
+		}
+	}
+
+	if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
+		currentPtr->tileCoordinateZ = LIGHT_BLUE;
+		currentPtr->setColor();
+	}
+
+	currentPtr = beginPtr;
+	up = false;
+
+	while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[3] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[3] == nullptr && !up)) {
+
+		if (currentPtr != beginPtr) {
+			if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
+				currentPtr->tileCoordinateZ = LIGHT_BLUE;
+				currentPtr->setColor();
+			}
+		}
+
+		if (up && currentPtr->neighbors[0] != nullptr) {
+			currentPtr = currentPtr->neighbors[0];
+		}
+		else if (up && currentPtr->neighbors[0] == nullptr) {
+			currentPtr = currentPtr->neighbors[3];
+			up = false;
+		}
+		else if (!up && currentPtr->neighbors[2] != nullptr) {
+			currentPtr = currentPtr->neighbors[2];
+		}
+		else if (!up && currentPtr->neighbors[2] == nullptr) {
+			currentPtr = currentPtr->neighbors[3];
+			up = true;
+		}
+	}
+
+	if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
+		currentPtr->tileCoordinateZ = LIGHT_BLUE;
+		currentPtr->setColor();
+	}
+}
+
+// Uses a common partner to fill in remaining black tiles (DOES NOT [NECESSARILY] FOLLOW PARTNER LOGIC)
+void commonFill(std::vector<std::vector<Tile>>& arrayMap)
+{
+	for (int i = 0; i < arrayMap.size(); ++i) {
+		for (int j = 0; j < arrayMap[j].size(); ++j) {
+			if (arrayMap[i][j].tileCoordinateZ == NONE) {
+
+				std::vector<int> adjacentHeights;
+
+				for (int offsetX = -1; offsetX < 2; offsetX += 2) {
+					if (isValidTile(i + offsetX, j) && arrayMap[i + offsetX][j].tileCoordinateZ != NONE) {
+						adjacentHeights.push_back(arrayMap[i + offsetX][j].tileCoordinateZ);
+					}
+				}
+
+				for (int offsetY = -1; offsetY < 2; offsetY += 2) {
+					if (isValidTile(i, j + offsetY) && arrayMap[i][j + offsetY].tileCoordinateZ != NONE) {
+						adjacentHeights.push_back(arrayMap[i][j + offsetY].tileCoordinateZ);
+					}
+				}
+
+				if (adjacentHeights.size() > 0) {
+					arrayMap[i][j].tileCoordinateZ = intToColor(adjacentHeights[randRangeInclusive(0, (int)adjacentHeights.size() - 1)]);
+					arrayMap[i][j].setColor();
+				}
+
+			}
+		}
+	}
 }

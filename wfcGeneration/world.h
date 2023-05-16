@@ -10,6 +10,9 @@
 #include <windows.h>
 #include <string>
 
+static constexpr int BIRTH_RATE = 35;			// Standard 35ish
+static constexpr int BIRTH_DEATH_NUMBER = 4;	// Standard 4ish
+
 enum Color
 {
 	NONE, BLUE, LIGHT_BLUE, YELLOW, GREEN, RED, BROWN, PURPLE
@@ -18,7 +21,7 @@ enum Color
 const std::map<int, std::set<int>> partners =	{
 
 													{1, {1, 2}},
-													{2, {1, 2, 3}},
+													{2, {/*1,*/ 2, 3}},
 													{3, {2, 3, 4}},
 													{4, {3, 4, 5}}
 													,{5, {4, 5, 6}} // -- More kinds of terrain makes it harder to place consistently
@@ -26,7 +29,7 @@ const std::map<int, std::set<int>> partners =	{
 
 												};
 
-const std::vector<int> tileChance = {0, 70, 50, 50, 60, 60};
+const std::vector<int> tileChance = {0, 99, 50, 50, 60, 60};
 
 const std::vector<std::vector<int>> transitionMatrix =	{
 														
@@ -94,6 +97,13 @@ void wfc_8pt(Tile* tPtr, bool init);
 void wfc_2snake(Tile* tPtr);
 void wfc_duplicate2snake(Tile* tPtr);
 void wfc_2snake_weighted(Tile* tPtr);
+
+bool isValidTile(int i, int j);
+int gol_checkPartnersSea(std::vector<std::vector<Tile>>& arrayMap, int i, int j);
+void gol_seedMapOcean(std::vector<std::vector<Tile>>& arrayMap);
+void gol_updateMap(std::vector<std::vector<Tile>>& arrayMap, int amountPasses);
+void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPasses);
+
 void verticalFill(std::vector<std::vector<Tile>>& arrayMap, int passes);
 void horizontalFill(std::vector<std::vector<Tile>>& arrayMap, int passes);
 void doubleFill(std::vector<std::vector<Tile>>& arrayMap, int passes);
@@ -102,3 +112,4 @@ void floodFill(Tile tile, std::vector<Tile>& vectorFoundTiles);
 void tileFill(std::vector<std::vector<Tile>>& arrayMap, int tileType, int targetNum, int targetType);
 void floodFillAllDirections(Tile tile, std::vector<Tile>& vectorFoundTiles);
 void tileFillAllDirections(std::vector<std::vector<Tile>>& arrayMap, int tileType, int targetNum, int targetType);
+void commonFill(std::vector<std::vector<Tile>>& arrayMap);
