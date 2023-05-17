@@ -176,6 +176,21 @@ int countEmptyTiles(std::vector<std::vector<Tile>>& arrayMap)
 	return count;
 }
 
+std::vector<Tile*> findEmptyTiles(std::vector<std::vector<Tile>>& arrayMap)
+{
+	std::vector<Tile*> foundEmpties;
+
+	for (int i = 0; i < arrayMap.size(); ++i){
+		for (int j = 0; j < arrayMap[i].size(); ++j) {
+			if (arrayMap[i][j].tileCoordinateZ == NONE) {
+				foundEmpties.push_back(&arrayMap[i][j]);
+			}
+		}
+	}
+
+	return foundEmpties;
+}
+
 void linkMapArray(std::vector<std::vector<Tile>>& arrayMap)
 {
 	for (int i = 0; i < arrayMap.size(); ++i) {
@@ -518,6 +533,34 @@ void wfc_8pt(Tile* tPtr, bool init)
 	}
 	for (int i = 0; i < (tPtr->dNeighbors).size(); ++i) {
 		wfc_8pt(tPtr->dNeighbors[i], false);
+	}
+}
+
+void scorchedEarthFill(std::vector<std::vector<Tile>>& arrayMap, bool diagonal)
+{
+	while (countEmptyTiles(arrayMap) > 0) {
+		
+		std::vector<Tile*> emptyTiles = findEmptyTiles(arrayMap);
+
+		for (Tile* emptyTile : emptyTiles) {
+			for (Tile* neighbor: emptyTile->neighbors) {
+				if (neighbor != nullptr) {
+					neighbor->tileCoordinateZ = NONE;
+					neighbor->setColor();
+				}
+			}
+			if (diagonal) {
+				for (Tile* neighbor : emptyTile->dNeighbors) {
+					if (neighbor != nullptr) {
+						neighbor->tileCoordinateZ = NONE;
+						neighbor->setColor();
+					}
+				}
+			}
+		}
+
+		wfc_2snake_weighted(emptyTiles[rand() % emptyTiles.size()]);
+
 	}
 }
 
@@ -967,14 +1010,14 @@ bool isEmptyAdjacentTile(Tile t)
 	return false;
 }
 
-int gol_checkPartnersSea(std::vector<std::vector<Tile>>& arrayMap, int i, int j)
+int checkSpecificPartner(std::vector<std::vector<Tile>>& arrayMap, Color tileType , int i, int j)
 {
 	int count = 0;
 
 	for (int offsetX = -1; offsetX < 2; ++offsetX) {
 		for (int offsetY = -1; offsetY < 2; ++offsetY) {
 			if (offsetX == 0 && offsetY == 0) continue;
-			if (isValidTile(i + offsetX, j + offsetY) && arrayMap[i + offsetX][j + offsetY].tileCoordinateZ == BLUE) {
+			if (isValidTile(i + offsetX, j + offsetY) && arrayMap[i + offsetX][j + offsetY].tileCoordinateZ == tileType) {
 				++count;
 			}
 		}
@@ -1000,7 +1043,7 @@ void gol_updateMap(std::vector<std::vector<Tile>>& arrayMap, int amountPasses)
 	for (int i = 0; i < amountPasses; ++i){
 		for (int j = 0; j < arrayMap.size(); ++j) {
 			for (int k = 0; k < arrayMap[j].size(); ++k) {
-				if (gol_checkPartnersSea(arrayMap, j, k) >= BIRTH_DEATH_NUMBER) {
+				if (checkSpecificPartner(arrayMap, BLUE, j, k) >= BIRTH_DEATH_NUMBER) {
 					arrayMap[j][k].tileCoordinateZ = BLUE;
 					arrayMap[j][k].setColor();
 				}
@@ -1026,7 +1069,7 @@ void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPass
 		// Checks if the snake has hit the upper right or lower right corner
 		while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[1] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[1] == nullptr && !up)) {
 			
-			if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
+			if (checkSpecificPartner(arrayMap, BLUE, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
 				currentPtr->tileCoordinateZ = BLUE;
 				currentPtr->setColor();
 			}
@@ -1052,7 +1095,7 @@ void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPass
 			}
 		}
 
-		if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
+		if (checkSpecificPartner(arrayMap, BLUE, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
 			currentPtr->tileCoordinateZ = BLUE;
 			currentPtr->setColor();
 		}
@@ -1067,7 +1110,7 @@ void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPass
 		while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[3] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[3] == nullptr && !up)) {
 
 			if (currentPtr != beginPtr) {
-				if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
+				if (checkSpecificPartner(arrayMap, BLUE, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
 					currentPtr->tileCoordinateZ = BLUE;
 					currentPtr->setColor();
 				}
@@ -1093,7 +1136,7 @@ void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPass
 			}
 		}
 
-		if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
+		if (checkSpecificPartner(arrayMap, BLUE, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= BIRTH_DEATH_NUMBER) {
 			currentPtr->tileCoordinateZ = BLUE;
 			currentPtr->setColor();
 		}
@@ -1111,7 +1154,7 @@ void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPass
 	// Checks if the snake has hit the upper right or lower right corner
 	while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[1] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[1] == nullptr && !up)) {
 
-		if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
+		if (checkSpecificPartner(arrayMap, BLUE, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
 			currentPtr->tileCoordinateZ = LIGHT_BLUE;
 			currentPtr->setColor();
 		}
@@ -1133,7 +1176,7 @@ void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPass
 		}
 	}
 
-	if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
+	if (checkSpecificPartner(arrayMap, BLUE, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
 		currentPtr->tileCoordinateZ = LIGHT_BLUE;
 		currentPtr->setColor();
 	}
@@ -1144,7 +1187,7 @@ void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPass
 	while (!(currentPtr->neighbors[0] == nullptr && currentPtr->neighbors[3] == nullptr && up) && !(currentPtr->neighbors[2] == nullptr && currentPtr->neighbors[3] == nullptr && !up)) {
 
 		if (currentPtr != beginPtr) {
-			if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
+			if (checkSpecificPartner(arrayMap, BLUE, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
 				currentPtr->tileCoordinateZ = LIGHT_BLUE;
 				currentPtr->setColor();
 			}
@@ -1166,10 +1209,82 @@ void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPass
 		}
 	}
 
-	if (gol_checkPartnersSea(arrayMap, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
+	if (checkSpecificPartner(arrayMap, BLUE, convertCoordinateToGrid(currentPtr->tileCoordinateX), convertCoordinateToGrid(currentPtr->tileCoordinateY)) >= 1 && currentPtr->tileCoordinateZ == NONE && !(currentPtr->tileCoordinateZ == BLUE)) {
 		currentPtr->tileCoordinateZ = LIGHT_BLUE;
 		currentPtr->setColor();
 	}
+}
+
+int find_next_empty_tile(std::vector<Tile> v, int startPosition)
+{
+	if (startPosition == v.size() - 1) return -1;
+
+	for (int i = startPosition + 1; i < v.size(); ++i) {
+		if (v[i].tileCoordinateZ == 0) return i;
+	}
+
+	return -1;
+}
+
+int find_next_full_tile(std::vector<Tile> v, int startPosition)
+{
+	if (startPosition == v.size() - 1) return -1;
+
+	for (int i = startPosition + 1; i < v.size(); ++i) {
+		if (v[i].tileCoordinateZ != 0) return i;
+	}
+
+	return -1;
+}
+
+bool vectorContainsZeroTile(std::vector<Tile> v)
+{
+	for (auto i : v) {
+		if (i.tileCoordinateZ == 0) return true;
+	}
+	
+	return false;
+}
+
+void wfc_segment(std::vector<std::vector<Tile>>& arrayMap)
+{
+	for (int i = 0; i < arrayMap.size(); ++i) {
+
+		int startPos = find_next_empty_tile(arrayMap[i], -1);
+		int nextPos = find_next_full_tile(arrayMap[i], startPos) - 1;
+
+		while (startPos >= 0 && nextPos >= 0) {
+			
+			int next_segment = find_next_empty_tile(arrayMap[i], nextPos);
+
+			setPossibleWeightedPartner_4Pt(&arrayMap[i][startPos]);
+			setPossibleWeightedPartner_4Pt(&arrayMap[i][nextPos]);
+
+			while (startPos != nextPos) {
+				if (nextPos == startPos + 1) {
+					++startPos;
+					setPossibleWeightedPartner_4Pt(&arrayMap[i][startPos]);
+				}
+				else {
+					++startPos;
+					--nextPos;
+					setPossibleWeightedPartner_4Pt(&arrayMap[i][startPos]);
+					setPossibleWeightedPartner_4Pt(&arrayMap[i][nextPos]);
+				}
+
+			}
+			startPos = next_segment;
+			nextPos = find_next_full_tile(arrayMap[i], startPos) - 1;
+		}
+
+		if (startPos > 0) {
+			for (int j = startPos; j < arrayMap[i].size(); ++j) {
+				setPossibleWeightedPartner_4Pt(&arrayMap[i][j]);
+			}
+		}
+	}
+
+	// wfc_2snake_weighted(&arrayMap[rand() % arrayMap.size()][rand() % arrayMap[0].size()]);
 }
 
 // Uses a common partner to fill in remaining black tiles (DOES NOT [NECESSARILY] FOLLOW PARTNER LOGIC)

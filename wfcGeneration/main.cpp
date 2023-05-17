@@ -51,15 +51,16 @@ int main()
 	SDL_RenderPresent(renderer);
 	Sleep(3000);
 
-	// wfc_grow_weighted(mapArray);
-	wfc_2snake_weighted(randomTile);
+	wfc_segment(mapArray);
+	scorchedEarthFill(mapArray);
+	// wfc_2snake_weighted(randomTile);
 	// wfc_lock(mapArray);
 	
 	drawMapArray(renderer, mapArray);
 	SDL_RenderPresent(renderer);
 	Sleep(3000);
 
-	commonFill(mapArray);
+	// commonFill(mapArray);
 
 	drawMapArray(renderer, mapArray);
 	SDL_RenderPresent(renderer);
