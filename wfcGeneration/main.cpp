@@ -40,10 +40,6 @@ int main()
 	//wfc_2snake_weighted(randomTile);
 	gol_seedMapOcean(mapArray);
 
-	drawMapArray(renderer, mapArray);
-	SDL_RenderPresent(renderer);
-	Sleep(3000);
-
 	//gol_updateMap(mapArray, GOL_UPDATE_PASSES);
 	gol_updateMapSnake(mapArray, GOL_UPDATE_PASSES);
 
@@ -66,8 +62,8 @@ int main()
 	SDL_RenderPresent(renderer);
 	Sleep(3000);
 
-	doubleFill(mapArray, 5);
-
+	// doubleFill(mapArray, 5);
+	tripleFill(mapArray, 20, false);
 	// tileFill(mapArray, 2, 20, 1);
 	// tileFillAllDirections(mapArray, 2, 20, 1);
 

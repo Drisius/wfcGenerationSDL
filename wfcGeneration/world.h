@@ -10,12 +10,12 @@
 #include <windows.h>
 #include <string>
 
-static constexpr int BIRTH_RATE = 35;			// Standard 35ish
+static constexpr int BIRTH_RATE = 34;			// Standard 35ish
 static constexpr int BIRTH_DEATH_NUMBER = 4;	// Standard 4ish
 
 enum Color
 {
-	NONE, BLUE, LIGHT_BLUE, YELLOW, GREEN, RED, BROWN, PURPLE
+	NONE, BLUE, LIGHT_BLUE, YELLOW, GREEN, RED, BROWN, PURPLE, WHITE
 };
 
 const std::map<int, std::set<int>> partners =	{
@@ -25,22 +25,24 @@ const std::map<int, std::set<int>> partners =	{
 													{3, {2, 3, 4}},
 													{4, {3, 4, 5}}
 													,{5, {4, 5, 6}} // -- More kinds of terrain makes it harder to place consistently
-													,{6, {5, 6}}
+													,{6, {5, 6, 7}}
+													,{7, {6, 7, 8}}
+													,{8, {7, 8}}
 
 												};
 
-const std::vector<int> tileChance = {0, 99, 50, 50, 60, 60};
+const std::vector<int> tileChance = {0, 99, 50, 50, 60, 60, 60, 60, 60, 60};
 
-const std::vector<std::vector<int>> transitionMatrix =	{
-														
-															{50, 10, 10, 10, 10, 10},
-															{10, 50, 10, 10, 10, 10},
-															{10, 10, 50, 10, 10, 10},
-															{10, 10, 10, 50, 10, 10},
-															{10, 10, 10, 10, 50, 10},
-															{10, 10, 10, 10, 10, 50}
-
-														};
+//const std::vector<std::vector<int>> transitionMatrix =	{
+//														
+//															{50, 10, 10, 10, 10, 10},
+//															{10, 50, 10, 10, 10, 10},
+//															{10, 10, 50, 10, 10, 10},
+//															{10, 10, 10, 50, 10, 10},
+//															{10, 10, 10, 10, 50, 10},
+//															{10, 10, 10, 10, 10, 50}
+//
+//														};
 
 struct Tile
 {
@@ -108,6 +110,9 @@ int find_next_empty_tile(std::vector<Tile> v, int startPosition);
 int find_next_full_tile(std::vector<Tile> v, int startPosition);
 bool vectorContainsZeroTile(std::vector<Tile> v);
 int checkSpecificPartner(std::vector<std::vector<Tile>>& arrayMap, Color tileType, int i, int j);
+Color returnThreeOrMoreIdenticalColors(std::vector<Color> v);
+int countColors(std::vector<Color> v, Color c);
+
 void gol_seedMapOcean(std::vector<std::vector<Tile>>& arrayMap);
 void gol_updateMap(std::vector<std::vector<Tile>>& arrayMap, int amountPasses);
 void gol_updateMapSnake(std::vector<std::vector<Tile>>& arrayMap, int amountPasses);
@@ -122,3 +127,4 @@ void tileFill(std::vector<std::vector<Tile>>& arrayMap, int tileType, int target
 void floodFillAllDirections(Tile tile, std::vector<Tile>& vectorFoundTiles);
 void tileFillAllDirections(std::vector<std::vector<Tile>>& arrayMap, int tileType, int targetNum, int targetType);
 void commonFill(std::vector<std::vector<Tile>>& arrayMap);
+void tripleFill(std::vector<std::vector<Tile>>& arrayMap, int passes, bool diagonal = false);

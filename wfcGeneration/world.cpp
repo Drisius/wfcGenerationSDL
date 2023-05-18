@@ -80,10 +80,15 @@ void Tile::setColor()
 		g = 255;
 		b = 255;
 		break;
+	case WHITE:
+		r = 255;
+		g = 255;
+		b = 255;
+		break;
 	case NONE:
 		r = 0;
-		g = 0;
 		b = 0;
+		g = 0;
 		break;
 	default:
 		break;
@@ -99,6 +104,8 @@ int randRangeInclusive(int min, int max)
 Color intToColor(int n) {
 	switch (n)
 	{
+	case(8):
+		return WHITE;
 	case(7):
 		return PURPLE;
 		break;
@@ -536,6 +543,7 @@ void wfc_8pt(Tile* tPtr, bool init)
 	}
 }
 
+// Destroys neighboring tiles then tries to fill in the resulting blanks
 void scorchedEarthFill(std::vector<std::vector<Tile>>& arrayMap, bool diagonal)
 {
 	while (countEmptyTiles(arrayMap) > 0) {
@@ -663,7 +671,6 @@ void floodFill(Tile tile, std::vector<Tile>& vectorFoundTiles)
 		}
 	}
 }
-
 
 // Goes across the map and replaces all areas (adjacent partners) with tileType under size targetNum with targetType
 void tileFill(std::vector<std::vector<Tile>>& arrayMap, int tileType, int targetNum, int targetType)
@@ -910,8 +917,10 @@ void wfc_2snake_weighted(Tile* tPtr)
 		if (init) {
 			// tPtr->tileCoordinateZ = PURPLE;
 			// tPtr->setColor();
-			tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight)); // randRangeInclusive(1, tPtr->maxHeight) for standard algorithm
-			tPtr->setColor();
+			if (tPtr->tileCoordinateZ == NONE) {
+				tPtr->tileCoordinateZ = intToColor(randRangeInclusive(1, tPtr->maxHeight)); // randRangeInclusive(1, tPtr->maxHeight) for standard algorithm
+				tPtr->setColor();
+			}
 			init = false;
 		}
 		else {
@@ -1313,6 +1322,62 @@ void commonFill(std::vector<std::vector<Tile>>& arrayMap)
 					arrayMap[i][j].setColor();
 				}
 
+			}
+		}
+	}
+}
+
+int countColors(std::vector<Color> v, Color c)
+{
+	int count = 0;
+
+	for (Color color_in_vector : v) {
+		if (color_in_vector == c) {
+			++count;
+		}
+	}
+
+	return count;
+}
+
+// Can be trivially extended to n colors, this will do
+Color returnThreeOrMoreIdenticalColors(std::vector<Color> v)
+{
+	for (Color c : v) {
+		if (countColors(v, c) >= 3) {
+			return c;
+		}
+	}
+
+	return NONE;
+}
+
+// Fills in tiles to smooth out of the map if it has >= 3 of the same neighbors
+void tripleFill(std::vector<std::vector<Tile>>& arrayMap, int passes, bool diagonal)
+{
+	for (int i = 0; i < arrayMap.size(); ++i) {
+		for (int j = 0; j < arrayMap[j].size(); ++j) {
+			
+			std::vector<Color> neighborColors;
+
+			for (Tile* neighbor : arrayMap[i][j].neighbors) {
+				if (neighbor != nullptr && neighbor->tileCoordinateZ != NONE) {
+					neighborColors.push_back(neighbor->tileCoordinateZ);
+				}
+			}
+
+			if (diagonal) {
+				for (Tile* neighbor : arrayMap[i][j].neighbors) {
+					if (neighbor != nullptr && neighbor->tileCoordinateZ != NONE) {
+						neighborColors.push_back(neighbor->tileCoordinateZ);
+					}
+				}
+			}
+
+			Color replacementColor = returnThreeOrMoreIdenticalColors(neighborColors);
+			if (replacementColor != NONE) {
+				arrayMap[i][j].tileCoordinateZ = replacementColor;
+				arrayMap[i][j].setColor();
 			}
 		}
 	}
